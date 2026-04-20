@@ -1,0 +1,12 @@
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         POINTS CALCULATION FORMULA                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   FINAL POINTS = base_points × room_multiplier × speed_bonus                 │
+│                                                                              │
+│   WHERE:                                                                     │
+│   • base_points = Points set on the question (50-500)                        │
+│   • room_multiplier = Room type multiplier (0.5 - 3.0)                       │
+│   • speed_bonus = Speed-based multiplier (0.5 - 2.0)                         │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘

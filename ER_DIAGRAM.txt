@@ -1,0 +1,80 @@
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   NEUROARENA DATABASE SCHEMA                                         │
+│                                      (With Question Points)                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+                                              ┌─────────────────────┐
+                                              │     ROOM_TYPES      │
+                                              │─────────────────────│
+                                              │ room_type_id (PK)   │
+                                              │ name                │
+                                              │ description         │
+                                              │ difficulty_level    │
+                                              │ icon_path           │
+                                              │ base_points (NEW)   │ ← Multiplier for room type
+                                              └──────────┬──────────┘
+                                                         │
+                                                         │ 1
+                                                         │
+                                                         │ has many
+                                                         │
+                                                         ▼
+┌─────────────────────┐                        ┌─────────────────────────────────────┐
+│      ANSWERS        │                        │            QUESTIONS                │
+│─────────────────────│                        │─────────────────────────────────────│
+│ answer_id (PK)      │◄───────────────────────│ question_id (PK)                    │
+│ question_id (FK)    │        many to one     │ room_type_id (FK)                   │
+│ answer_text         │                        │ question_text                       │
+│ is_correct          │                        │ difficulty                          │
+│ display_order       │                        │ base_points (NEW) ←─── Core points  │
+└─────────────────────┘                        │ time_limit_seconds (NEW)            │
+                                                │ category                            │
+                                                │ created_at                          │
+                                                └──────────────────┬──────────────────┘
+                                                                    │
+                                                                    │ 1
+                                                                    │
+                                                                    │ has many
+                                                                    │
+                                                                    ▼
+┌─────────────────────┐                        ┌─────────────────────────────────────┐
+│   BATTLE_RESULTS    │                        │              BATTLES                │
+│─────────────────────│                        │─────────────────────────────────────│
+│ battle_result_id(PK)│                        │ battle_id (PK)                      │
+│ battle_id (FK)      │◄───────────────────────│ room_code (UNIQUE)                  │
+│ player_id           │        one to many     │ room_type_id (FK)                   │
+│ username            │                        │ host_username                       │
+│ final_rank          │                        │ status                              │
+│ total_score         │                        │ started_at                          │
+│ correct_answers     │                        │ ended_at                            │
+│ accuracy            │                        │ current_question_number            │
+│ avg_response_time_ms│                        │ created_at                          │
+│ completed_at        │                        │ points_multiplier (NEW)             │ ← Room type multiplier
+└─────────────────────┘                        └──────────────────┬──────────────────┘
+                                                                    │
+                                                                    │ 1
+                                                                    │
+                                    ┌───────────────────────────────┼───────────────────────────────┐
+                                    │                               │                               │
+                                    │ 1                             │ 1                             │ 1
+                                    │                               │                               │
+                                    ▼                               ▼                               ▼
+                        ┌─────────────────────┐        ┌─────────────────────┐        ┌─────────────────────┐
+                        │   BATTLE_PLAYERS    │        │  BATTLE_QUESTIONS   │        │   PLAYER_ANSWERS    │
+                        │─────────────────────│        │─────────────────────│        │─────────────────────│
+                        │ battle_player_id(PK)│        │battle_question_id(PK)│        │ player_answer_id(PK)│
+                        │ battle_id (FK)      │        │ battle_id (FK)      │        │ battle_id (FK)      │
+                        │ player_id           │        │ question_id (FK)    │        │ player_id           │
+                        │ username            │        │ question_number     │        │ question_id (FK)    │
+                        │ joined_at           │        │ points_possible(NEW)│        │ selected_answer_id(FK)│
+                        └─────────────────────┘        └─────────────────────┘        │ question_number      │
+                                    │                                                  │ response_time_ms     │
+                                    │ 1                                                │ points_earned        │
+                                    │                                                  │ is_correct           │
+                                    │ has many                                         │ submitted_at         │
+                                    │                                                  └─────────────────────┘
+                                    ▼
+                        ┌─────────────────────┐
+                        │   PLAYER_ANSWERS    │
+                        │   (already shown)   │
+                        └─────────────────────┘
