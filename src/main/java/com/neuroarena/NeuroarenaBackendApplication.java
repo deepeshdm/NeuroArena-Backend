@@ -1,4 +1,4 @@
-package com.neuroarena.neuroarena_backend;
+package com.neuroarena;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
