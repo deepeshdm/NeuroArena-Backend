@@ -17,9 +17,11 @@ public class BattlePlayer {
     private String battlePlayerId;  // Changed from Long to String (UUID)
 
     @Column(name = "battle_id", nullable = false, length = 36)
-    private String battleId;  // Changed from Battle object to String ID
+    private String battleId;   // NOT Long
 
-    private Long playerId;
+    @Column(name = "player_id", nullable = false, length = 36)
+    private String playerId;   // NOT Long
+
     private String username;
 
     private LocalDateTime joinedAt;

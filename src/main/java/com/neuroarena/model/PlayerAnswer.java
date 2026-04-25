@@ -16,19 +16,17 @@ public class PlayerAnswer {
     @Column(length = 36)
     private String playerAnswerId;  // Changed from Long to String (UUID)
 
-    @ManyToOne
-    @JoinColumn(name = "battle_id")
-    private Battle battle;
+    @Column(name = "battle_id", nullable = false, length = 36)
+    private String battleId;   // NOT Long
 
-    private Long playerId;
+    @Column(name = "player_id", nullable = false, length = 36)
+    private String playerId;   // NOT Long
 
-    @ManyToOne
-    @JoinColumn(name = "question_id")
-    private Question question;
+    @Column(name = "question_id", nullable = false, length = 36)
+    private String questionId;   // NOT Long
 
-    @ManyToOne
-    @JoinColumn(name = "selected_answer_id")
-    private Answer selectedAnswer;
+    @Column(name = "selected_answer_id", nullable = false, length = 36)
+    private String selectedAnswerId;   // NOT Long
 
     private Integer questionNumber;
 

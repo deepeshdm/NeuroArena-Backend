@@ -12,11 +12,11 @@ public interface QuestionRepository extends JpaRepository<Question, String> {
     // Count questions by room type ID
     long countByRoomTypeId(Integer roomTypeId);
     
-    // Optional: Find random questions for a room type
+    // Find random questions for a room type
     @Query(value = "SELECT * FROM questions WHERE room_type_id = ?1 ORDER BY RAND() LIMIT 10", nativeQuery = true)
     List<Question> findRandomQuestionsByRoomType(Integer roomTypeId);
     
-    // Optional: Find random questions for Mixed Bag
+    // Find random questions for Mixed Bag (all room types)
     @Query(value = "SELECT * FROM questions ORDER BY RAND() LIMIT 10", nativeQuery = true)
     List<Question> findRandomMixedQuestions();
 }

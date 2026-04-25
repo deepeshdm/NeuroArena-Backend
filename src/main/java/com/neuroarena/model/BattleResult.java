@@ -16,11 +16,11 @@ public class BattleResult {
     @Column(length = 36)
     private String battleResultId;  // Changed from Long to String (UUID)
 
-    @ManyToOne
-    @JoinColumn(name = "battle_id")
-    private Battle battle;
+    @Column(name = "battle_id", nullable = false, length = 36)
+    private String battleId;   // NOT Long
 
-    private Long playerId;
+    @Column(name = "player_id", nullable = false, length = 36)
+    private String playerId;   // NOT Long
     private String username;
 
     private Integer finalRank;

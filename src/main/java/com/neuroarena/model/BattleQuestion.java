@@ -16,10 +16,10 @@ public class BattleQuestion {
     private String battleQuestionId;  // Changed from Long to String (UUID)
 
     @Column(name = "battle_id", nullable = false, length = 36)
-    private String battleId;  // Changed from Battle object to String ID
+    private String battleId;   // NOT Long
 
     @Column(name = "question_id", nullable = false, length = 36)
-    private String questionId;  // Changed from Question object to String ID
+    private String questionId;   // NOT Long
 
     private Integer questionNumber;
 

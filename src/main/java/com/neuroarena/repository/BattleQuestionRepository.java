@@ -2,11 +2,20 @@ package com.neuroarena.repository;
 
 import com.neuroarena.model.BattleQuestion;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
-public interface BattleQuestionRepository extends JpaRepository<BattleQuestion, Long> {
+@Repository
+public interface BattleQuestionRepository extends JpaRepository<BattleQuestion, String> {  // String ID
 
-    List<BattleQuestion> findByBattle_BattleIdOrderByQuestionNumber(Long battleId);
+    // Find by battle ID sorted by question number
+    List<BattleQuestion> findByBattleIdOrderByQuestionNumber(String battleId);
 
+    // Find specific question in battle
+    Optional<BattleQuestion> findByBattleIdAndQuestionNumber(String battleId, Integer questionNumber);
+
+    // Delete all questions for a battle (cleanup)
+    void deleteByBattleId(String battleId);
 }
