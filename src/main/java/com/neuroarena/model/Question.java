@@ -13,12 +13,11 @@ import lombok.*;
 public class Question {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long questionId;
+    @Column(length = 36)
+    private String questionId;  // Changed from Long to String (UUID)
 
-    @ManyToOne
-    @JoinColumn(name = "room_type_id")
-    private RoomType roomType;
+    @Column(name = "room_type_id", nullable = false)
+    private Integer roomTypeId;  // Changed from RoomType object to Integer ID
 
     @Column(columnDefinition = "TEXT")
     private String questionText;

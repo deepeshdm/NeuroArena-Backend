@@ -12,8 +12,7 @@ import lombok.*;
 public class RoomType {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long roomTypeId;
+    private Integer roomTypeId;  // Changed from Long to Integer (TINYINT in DB)
 
     private String name;
     private String description;

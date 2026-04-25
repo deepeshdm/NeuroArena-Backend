@@ -13,8 +13,8 @@ import lombok.*;
 public class BattleResult {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long battleResultId;
+    @Column(length = 36)
+    private String battleResultId;  // Changed from Long to String (UUID)
 
     @ManyToOne
     @JoinColumn(name = "battle_id")

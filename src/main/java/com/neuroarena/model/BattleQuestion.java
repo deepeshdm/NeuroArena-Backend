@@ -12,16 +12,14 @@ import lombok.*;
 public class BattleQuestion {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long battleQuestionId;
+    @Column(length = 36)
+    private String battleQuestionId;  // Changed from Long to String (UUID)
 
-    @ManyToOne
-    @JoinColumn(name = "battle_id")
-    private Battle battle;
+    @Column(name = "battle_id", nullable = false, length = 36)
+    private String battleId;  // Changed from Battle object to String ID
 
-    @ManyToOne
-    @JoinColumn(name = "question_id")
-    private Question question;
+    @Column(name = "question_id", nullable = false, length = 36)
+    private String questionId;  // Changed from Question object to String ID
 
     private Integer questionNumber;
 

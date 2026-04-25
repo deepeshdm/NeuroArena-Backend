@@ -12,8 +12,8 @@ import lombok.*;
 public class Answer {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long answerId;
+    @Column(length = 36)
+    private String answerId;  // Changed from Long to String (UUID)
 
     @ManyToOne
     @JoinColumn(name = "question_id")

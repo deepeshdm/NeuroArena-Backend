@@ -14,15 +14,14 @@ import lombok.*;
 public class Battle {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long battleId;
+    @Column(length = 36)
+    private String battleId;  // Changed from Long to String (UUID)
 
     @Column(unique = true)
     private String roomCode;
 
-    @ManyToOne
-    @JoinColumn(name = "room_type_id")
-    private RoomType roomType;
+    @Column(name = "room_type_id", nullable = false)
+    private Integer roomTypeId;  // Changed from RoomType object to Integer ID
 
     private String hostUsername;
 
