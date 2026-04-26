@@ -29,4 +29,8 @@ public class BattlePlayer {
     private String avatarIconUrl;  // ← ADD THIS
 
     private LocalDateTime joinedAt;
+
+    @Column(name = "status", length = 20)
+    @Builder.Default
+    private String status = "WAITING";  // WAITING, READY, IN_GAME
 }

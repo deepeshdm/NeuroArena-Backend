@@ -64,6 +64,7 @@ public class WebSocketController {
             Map<String, Object> playerMap = new HashMap<>();
             playerMap.put("username", p.getUsername());
             playerMap.put("avatarIconUrl", p.getAvatarIconUrl());
+            playerMap.put("status", p.getStatus());  // ← Include status
             return playerMap;
         }).toList();
         
@@ -73,6 +74,7 @@ public class WebSocketController {
         playerListMessage.put("players", playerList);
         playerListMessage.put("count", playerList.size());
         playerListMessage.put("maxPlayers", 10);
+        
         
         messagingTemplate.convertAndSend(
             "/topic/room/" + roomCode,
@@ -91,18 +93,6 @@ public class WebSocketController {
             "/topic/room/" + roomCode,
             systemMessage
         );
-        
-        // Check if room is full
-        if (playerList.size() == 10) {
-            Map<String, Object> startMessage = new HashMap<>();
-            startMessage.put("type", "BATTLE_START");
-            startMessage.put("message", "Room is full! Battle starting...");
-            
-            messagingTemplate.convertAndSend(
-                "/topic/room/" + roomCode,
-                startMessage
-            );
-        }
     }
 
     @MessageMapping("/quiz/chat")
@@ -141,4 +131,94 @@ public class WebSocketController {
             chatMessage
         );
     }
+
+
+
+    @MessageMapping("/quiz/ready")
+    public void playerReady(@Payload Map<String, String> message) {
+        
+        String roomCode = message.get("roomCode");
+        String username = message.get("username");
+        
+        log.info("Player {} is ready in room {}", username, roomCode);
+        
+        // Find battle
+        Battle battle = battleRepository.findByRoomCode(roomCode).orElse(null);
+        if (battle == null) {
+            log.error("Room not found: {}", roomCode);
+            return;
+        }
+        
+        // Update player status to READY
+        battlePlayerRepository.updatePlayerStatus(
+            battle.getBattleId(), 
+            username, 
+            "READY"
+        );
+        
+        // Get updated player list with status
+        List<BattlePlayer> players = battlePlayerRepository.findByBattleId(battle.getBattleId());
+        
+        // Build player list with status
+        List<Map<String, Object>> playerList = players.stream().map(p -> {
+            Map<String, Object> playerMap = new HashMap<>();
+            playerMap.put("username", p.getUsername());
+            playerMap.put("avatarIconUrl", p.getAvatarIconUrl());
+            playerMap.put("status", p.getStatus());  // ← Include status
+            return playerMap;
+        }).toList();
+        
+        // Broadcast updated player list
+        Map<String, Object> playerListMessage = new HashMap<>();
+        playerListMessage.put("type", "PLAYER_LIST");
+        playerListMessage.put("players", playerList);
+        playerListMessage.put("count", playerList.size());
+        playerListMessage.put("maxPlayers", 10);
+        
+        messagingTemplate.convertAndSend(
+            "/topic/room/" + roomCode,
+            playerListMessage
+        );
+        
+        // Broadcast system message
+        Map<String, Object> systemMessage = new HashMap<>();
+        systemMessage.put("type", "CHAT_MESSAGE");
+        systemMessage.put("messageType", "SYSTEM");
+        systemMessage.put("username", "SYSTEM");
+        systemMessage.put("text", username + " is ready for battle!");
+        systemMessage.put("time", LocalDateTime.now().format(TIME_FORMATTER));
+        
+        messagingTemplate.convertAndSend(
+            "/topic/room/" + roomCode,
+            systemMessage
+        );
+        
+        // Check if all players are ready AND room is full
+        long readyCount = battlePlayerRepository.countReadyPlayers(battle.getBattleId());
+        long totalPlayers = battlePlayerRepository.countByBattleId(battle.getBattleId());
+        
+        if (readyCount == totalPlayers && totalPlayers == 10) {
+            // All players ready and room full - start battle
+            startBattle(battle, roomCode);
+        }
+    }
+    
+    private void startBattle(Battle battle, String roomCode) {
+        // Update all player statuses to IN_GAME
+        battlePlayerRepository.updatePlayerStatus(battle.getBattleId(), null, "IN_GAME");
+        
+        Map<String, Object> startMessage = new HashMap<>();
+        startMessage.put("type", "BATTLE_START");
+        startMessage.put("message", "All players ready! Battle starting...");
+        startMessage.put("battleId", battle.getBattleId());
+        
+        messagingTemplate.convertAndSend(
+            "/topic/room/" + roomCode,
+            startMessage
+        );
+        
+        log.info("Battle starting in room: {}", roomCode);
+    }
+
+
 }
