@@ -36,35 +36,35 @@ public class SeedData {
 
     public static final List<RoomTypeData> ROOM_TYPES = Arrays.asList(
         new RoomTypeData(1, "Mixed Bag", 
-            "Random questions from all categories - a complete challenge", 
+            "A chaotic swirl of every topic. Perfect for the ultimate generalist.", 
             "Mixed", 100, "https://i.ibb.co/Pvr69GpF/mixed-bag.jpg"),
         
         new RoomTypeData(2, "Science & Tech", 
-            "Physics, Chemistry, Biology, Technology questions", 
+            "Quantum physics to Javascript frameworks. Not for the faint of heart.", 
             "Medium", 100, "https://i.ibb.co/C5kjnd3J/science-tech.jpg"),
         
         new RoomTypeData(3, "History & Culture", 
-            "World history, geography, arts, and cultural trivia", 
+            "Uncover the secrets of civilizations and artistic revolutions.", 
             "Medium", 100, "https://i.ibb.co/8n1NQpDG/history-culture.jpg"),
         
         new RoomTypeData(4, "Pop Culture", 
-            "Movies, music, celebrities, entertainment trends", 
+            "Movies, music, and the digital zeitgeist. Stay relevant.", 
             "Easy", 80, "https://i.ibb.co/JjNn57B0/pop-culture.jpg"),
         
         new RoomTypeData(5, "Brain Teasers", 
-            "Logic puzzles, riddles, lateral thinking challenges", 
+            "Logic puzzles and lateral thinking challenges. Sharpen your mind.", 
             "Hard", 150, "https://i.ibb.co/nNwNKg7p/brain-teasers.jpg"),
         
         new RoomTypeData(6, "Hardcore Mode", 
-            "Difficult questions with faster pace and higher stakes", 
+            "One wrong answer and you're out. Maximum pressure.", 
             "Hard", 200, "https://i.ibb.co/YBfhPVCY/hardcore-mode.jpg"),
         
         new RoomTypeData(7, "Gaming & Esports", 
-            "Video games, gaming history, esports trivia", 
+            "From 8-bit classics to the latest global tournament metas.", 
             "Medium", 100, "https://i.ibb.co/99fLmP8C/gaming-esports.jpg"),
         
         new RoomTypeData(8, "Sports", 
-            "Football, basketball, Olympics, sports legends trivia", 
+            "The physics of the field and the history of champions.", 
             "Medium", 100, "https://i.ibb.co/NdCqfmdc/sports.jpg")
     );
 
