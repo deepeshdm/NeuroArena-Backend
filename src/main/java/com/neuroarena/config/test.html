@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NeuroArena WebSocket Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+</head>
+<body>
+    <h2>NeuroArena WebSocket Test</h2>
+    
+    Room Code: <input type="text" id="roomCode" value="482910"><br>
+    Username: <input type="text" id="username" value="SpeedMaster"><br>
+    <button onclick="connect()">Connect & Join</button>
+    <button onclick="sendChat()">Send Chat</button>
+    
+    <div id="logs" style="height:300px; overflow:auto; border:1px solid #ccc; margin-top:20px; padding:10px;"></div>
+
+    <script>
+        let stompClient = null;
+        let currentRoomCode = null;
+        
+        function log(msg) {
+            const logs = document.getElementById('logs');
+            logs.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + msg + '</div>';
+            console.log(msg);
+        }
+        
+        function connect() {
+            const roomCode = document.getElementById('roomCode').value;
+            const username = document.getElementById('username').value;
+            currentRoomCode = roomCode;
+            
+            log('Connecting to WebSocket...');
+            
+            // MUST use SockJS, not raw WebSocket
+            const socket = new SockJS('http://localhost:8080/ws/quiz');
+            stompClient = Stomp.over(socket);
+            
+            stompClient.connect({}, 
+                function(frame) {
+                    log('✅ WebSocket connected!');
+                    
+                    // Subscribe to room messages
+                    stompClient.subscribe('/topic/room/' + roomCode, function(message) {
+                        log('📩 Received: ' + message.body);
+                    });
+                    
+                    // Send join message
+                    stompClient.send('/app/quiz/join', {}, JSON.stringify({
+                        roomCode: roomCode,
+                        username: username
+                    }));
+                    
+                    log('📤 Join message sent for room ' + roomCode);
+                }, 
+                function(error) {
+                    log('❌ Connection error: ' + error);
+                }
+            );
+        }
+        
+        function sendChat() {
+            const username = document.getElementById('username').value;
+            const message = prompt('Enter message:');
+            if (message && stompClient) {
+                stompClient.send('/app/quiz/chat', {}, JSON.stringify({
+                    roomCode: currentRoomCode,
+                    username: username,
+                    text: message
+                }));
+                log('📤 Chat sent: ' + message);
+            }
+        }
+    </script>
+</body>
+</html>
