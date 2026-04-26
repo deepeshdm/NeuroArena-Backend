@@ -19,6 +19,8 @@ public interface BattleRepository extends JpaRepository<Battle, String> {  // St
 
     // Find active battles (WAITING or IN_PROGRESS)
     List<Battle> findByStatusIn(List<String> statuses);
+    
+    List<Battle> findByStatus(String status);
 
     // Find waiting battles older than specified time (for cleanup)
     List<Battle> findByStatusAndCreatedAtBefore(String status, LocalDateTime time);

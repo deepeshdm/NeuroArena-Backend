@@ -1,4 +1,5 @@
 package com.neuroarena.model;
+
 import java.time.LocalDateTime;
 import jakarta.persistence.*;
 import lombok.*;
@@ -14,15 +15,18 @@ public class BattlePlayer {
 
     @Id
     @Column(length = 36)
-    private String battlePlayerId;  // Changed from Long to String (UUID)
+    private String battlePlayerId;
 
     @Column(name = "battle_id", nullable = false, length = 36)
-    private String battleId;   // NOT Long
+    private String battleId;
 
     @Column(name = "player_id", nullable = false, length = 36)
-    private String playerId;   // NOT Long
+    private String playerId;
 
     private String username;
+
+    @Column(name = "avatar_icon_url", length = 500)
+    private String avatarIconUrl;  // ← ADD THIS
 
     private LocalDateTime joinedAt;
 }
