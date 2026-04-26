@@ -78,7 +78,7 @@ public class DatabaseInitializationService {
                 roomType.setDescription(roomTypeData.description);
                 roomType.setDifficultyLevel(roomTypeData.difficultyLevel);
                 roomType.setBasePoints(roomTypeData.basePoints);
-                roomType.setIconPath(null); // Can be set later
+                roomType.setIconPath(roomTypeData.iconPath); // Can be set later
 
                 roomTypeRepository.save(roomType);
                 log.info("✓ Inserted Room Type: {} (ID: {})", roomTypeData.name, roomTypeData.roomTypeId);

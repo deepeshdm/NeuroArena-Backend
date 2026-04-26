@@ -21,49 +21,51 @@ public class SeedData {
         public final String description;
         public final String difficultyLevel;
         public final int basePoints;
+        public final String iconPath;  // NEW: Icon path for room type
 
         public RoomTypeData(int roomTypeId, String name, String description, 
-                           String difficultyLevel, int basePoints) {
+                           String difficultyLevel, int basePoints, String iconPath) {
             this.roomTypeId = roomTypeId;
             this.name = name;
             this.description = description;
             this.difficultyLevel = difficultyLevel;
             this.basePoints = basePoints;
+            this.iconPath = iconPath;
         }
     }
 
     public static final List<RoomTypeData> ROOM_TYPES = Arrays.asList(
         new RoomTypeData(1, "Mixed Bag", 
             "Random questions from all categories - a complete challenge", 
-            "Mixed", 100),
+            "Mixed", 100, "https://i.ibb.co/Pvr69GpF/mixed-bag.jpg"),
         
         new RoomTypeData(2, "Science & Tech", 
             "Physics, Chemistry, Biology, Technology questions", 
-            "Medium", 100),
+            "Medium", 100, "https://i.ibb.co/C5kjnd3J/science-tech.jpg"),
         
         new RoomTypeData(3, "History & Culture", 
             "World history, geography, arts, and cultural trivia", 
-            "Medium", 100),
+            "Medium", 100, "https://i.ibb.co/8n1NQpDG/history-culture.jpg"),
         
         new RoomTypeData(4, "Pop Culture", 
             "Movies, music, celebrities, entertainment trends", 
-            "Easy", 80),
+            "Easy", 80, "https://i.ibb.co/JjNn57B0/pop-culture.jpg"),
         
         new RoomTypeData(5, "Brain Teasers", 
             "Logic puzzles, riddles, lateral thinking challenges", 
-            "Hard", 150),
+            "Hard", 150, "https://i.ibb.co/nNwNKg7p/brain-teasers.jpg"),
         
         new RoomTypeData(6, "Hardcore Mode", 
             "Difficult questions with faster pace and higher stakes", 
-            "Hard", 200),
+            "Hard", 200, "https://i.ibb.co/YBfhPVCY/hardcore-mode.jpg"),
         
         new RoomTypeData(7, "Gaming & Esports", 
             "Video games, gaming history, esports trivia", 
-            "Medium", 100),
+            "Medium", 100, "https://i.ibb.co/99fLmP8C/gaming-esports.jpg"),
         
         new RoomTypeData(8, "Sports", 
             "Football, basketball, Olympics, sports legends trivia", 
-            "Medium", 100)
+            "Medium", 100, "https://i.ibb.co/NdCqfmdc/sports.jpg")
     );
 
     // ============================================================================
