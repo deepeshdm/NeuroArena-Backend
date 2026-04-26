@@ -221,4 +221,63 @@ public class WebSocketController {
     }
 
 
+
+
+    @MessageMapping("/quiz/leave")
+    public void leaveRoom(@Payload Map<String, String> message) {
+        
+        String roomCode = message.get("roomCode");
+        String username = message.get("username");
+        
+        log.info("Player {} leaving room {}", username, roomCode);
+        
+        // Find battle
+        Battle battle = battleRepository.findByRoomCode(roomCode).orElse(null);
+        if (battle == null) {
+            log.error("Room not found: {}", roomCode);
+            return;
+        }
+        
+        // Remove player from database
+        battlePlayerRepository.deleteByBattleIdAndUsername(battle.getBattleId(), username);
+        
+        // Get remaining players
+        List<BattlePlayer> remainingPlayers = battlePlayerRepository.findByBattleId(battle.getBattleId());
+        
+        // Build updated player list with status
+        List<Map<String, Object>> playerList = remainingPlayers.stream().map(p -> {
+            Map<String, Object> playerMap = new HashMap<>();
+            playerMap.put("username", p.getUsername());
+            playerMap.put("avatarIconUrl", p.getAvatarIconUrl());
+            playerMap.put("status", p.getStatus());
+            return playerMap;
+        }).toList();
+        
+        // Broadcast updated player list to everyone in room
+        Map<String, Object> playerListMessage = new HashMap<>();
+        playerListMessage.put("type", "PLAYER_LIST");
+        playerListMessage.put("players", playerList);
+        playerListMessage.put("count", playerList.size());
+        playerListMessage.put("maxPlayers", 10);
+        
+        messagingTemplate.convertAndSend(
+            "/topic/room/" + roomCode,
+            playerListMessage
+        );
+        
+        // Broadcast system message that player left
+        Map<String, Object> systemMessage = new HashMap<>();
+        systemMessage.put("type", "CHAT_MESSAGE");
+        systemMessage.put("messageType", "SYSTEM");
+        systemMessage.put("username", "SYSTEM");
+        systemMessage.put("text", username + " left the lobby");
+        systemMessage.put("time", LocalDateTime.now().format(TIME_FORMATTER));
+        
+        messagingTemplate.convertAndSend(
+            "/topic/room/" + roomCode,
+            systemMessage
+        );
+    }
+
+
 }

@@ -53,4 +53,10 @@ public interface BattlePlayerRepository extends JpaRepository<BattlePlayer, Stri
     // Get players by status
     List<BattlePlayer> findByBattleIdAndStatus(String battleId, String status);
 
+    // Delete a player by battleId and username
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM BattlePlayer bp WHERE bp.battleId = :battleId AND bp.username = :username")
+    void deleteByBattleIdAndUsername(@Param("battleId") String battleId, @Param("username") String username);
+
 }
