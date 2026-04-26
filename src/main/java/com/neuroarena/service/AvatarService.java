@@ -54,3 +54,13 @@ public class AvatarService {
         }
     }
 }
+
+
+// USEAGE
+// @Autowired
+// private AvatarService avatarService;
+
+// // Get random alien player
+// AlienPlayer alien = avatarService.getRandomAlienPlayer();
+// String username = alien.username;
+// String avatarUrl = alien.avatarIconUrl;
