@@ -8,7 +8,6 @@ import java.util.Random;
 @Service
 public class AvatarService {
 
-    // Your avatar icon URLs - Replace with your actual links
     private static final List<String> AVATAR_ICONS = List.of(
         "https://i.ibb.co/JwLFTLwp/face1.jpg",
         "https://i.ibb.co/chDgnq1V/face2.jpg",
@@ -30,13 +29,28 @@ public class AvatarService {
         "https://i.ibb.co/Fq0HV3Bm/face18.jpg"
     );
 
+    private static final List<String> ALIEN_NAMES = List.of(
+        "Zorblax", "Xylar", "Nebulon", "Quasar", "Orion", "Vega", "Sirius",
+        "Andromeda", "Cosmo", "Astra", "Nova", "Stellar", "Comet", "Eclipse",
+        "Phoenix", "Zenith", "Rigel", "Altair", "Zork", "Glork", "Blorp"
+    );
+
     private final Random random = new Random();
 
-    /**
-     * Returns a random avatar icon URL
-     */
-    public String getRandomAvatarIcon() {
-        int index = random.nextInt(AVATAR_ICONS.size());
-        return AVATAR_ICONS.get(index);
+    public AlienPlayer getRandomAlienPlayer() {
+        String name = ALIEN_NAMES.get(random.nextInt(ALIEN_NAMES.size()));
+        String icon = AVATAR_ICONS.get(random.nextInt(AVATAR_ICONS.size()));
+        return new AlienPlayer(name, icon);
+    }
+
+    // Simple DTO
+    public static class AlienPlayer {
+        public String username;
+        public String avatarIconUrl;
+
+        public AlienPlayer(String username, String avatarIconUrl) {
+            this.username = username;
+            this.avatarIconUrl = avatarIconUrl;
+        }
     }
 }
