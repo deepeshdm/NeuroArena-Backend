@@ -2,8 +2,10 @@ package com.neuroarena;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 
 @SpringBootApplication
+@EnableWebSocketMessageBroker
 public class NeuroarenaBackendApplication {
 
 	public static void main(String[] args) {

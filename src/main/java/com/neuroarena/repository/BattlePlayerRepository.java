@@ -26,4 +26,6 @@ public interface BattlePlayerRepository extends JpaRepository<BattlePlayer, Stri
 
     // Delete all players for a battle
     void deleteByBattleId(String battleId);
+
+    Optional<BattlePlayer> findByBattleIdAndUsername(String battleId, String username);
 }
