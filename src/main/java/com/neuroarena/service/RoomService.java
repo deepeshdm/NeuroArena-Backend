@@ -152,4 +152,70 @@ public class RoomService {
             this.avatarIconUrl = avatarIconUrl;
         }
     }
+
+
+
+
+    /**
+     * Join a specific room using roomCode and username
+     * If username is taken, automatically appends a number (e.g., "SpeedMaster" → "SpeedMaster1")
+     */
+    @Transactional
+    public JoinResponse joinRoomByCode(String roomCode, String requestedUsername) {
+        
+        // 1. Find the room
+        Battle battle = battleRepository.findByRoomCode(roomCode).orElse(null);
+        if (battle == null) {
+            throw new RuntimeException("ROOM_NOT_FOUND");
+        }
+        
+        // 2. Check if room is still waiting
+        if (!"WAITING".equals(battle.getStatus())) {
+            throw new RuntimeException("ROOM_ALREADY_STARTED");
+        }
+        
+        // 3. Check room capacity
+        long playerCount = battlePlayerRepository.countByBattleId(battle.getBattleId());
+        if (playerCount >= 10) {
+            throw new RuntimeException("ROOM_FULL");
+        }
+        
+        // 4. Get existing usernames in this room
+        List<String> existingUsernames = battlePlayerRepository.findByBattleId(battle.getBattleId())
+                .stream()
+                .map(BattlePlayer::getUsername)
+                .toList();
+        
+        // 5. Generate unique username (append number if taken)
+        String finalUsername = requestedUsername;
+        int counter = 1;
+        while (existingUsernames.contains(finalUsername)) {
+            finalUsername = requestedUsername + counter;
+            counter++;
+        }
+        
+        // 6. Generate random avatar
+        var alien = avatarService.getRandomAlienPlayer();
+        String playerId = UUID.randomUUID().toString();
+        
+        // 7. Create and save player
+        BattlePlayer player = BattlePlayer.builder()
+                .battlePlayerId(UUID.randomUUID().toString())
+                .battleId(battle.getBattleId())
+                .playerId(playerId)
+                .username(finalUsername)
+                .avatarIconUrl(alien.avatarIconUrl)
+                .joinedAt(LocalDateTime.now())
+                .build();
+        
+        battlePlayerRepository.save(player);
+        
+        log.info("Player {} joined room {} (requested: {})", finalUsername, roomCode, requestedUsername);
+        
+        // 8. Return response with actual username used
+        return new JoinResponse(battle, playerId, finalUsername, alien.avatarIconUrl);
+    }
+
+
+
 }

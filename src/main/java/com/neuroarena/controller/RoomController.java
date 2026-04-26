@@ -35,4 +35,57 @@ public class RoomController {
                     .body(ApiResponse.error("Failed to join room: " + e.getMessage()));
         }
     }
+
+    @PostMapping("/join-by-code")
+    public ResponseEntity<ApiResponse<RoomService.JoinResponse>> joinRoomByCode(
+        
+        @RequestBody Map<String, String> request) {
+        
+        String roomCode = request.get("roomCode");
+        String username = request.get("username");
+        
+        // Validate roomCode
+        if (roomCode == null || roomCode.trim().isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Room code is required"));
+        }
+        
+        // Validate username
+        if (username == null || username.trim().isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Username is required"));
+        }
+        
+        if (username.length() < 3 || username.length() > 20) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Username must be 3-20 characters"));
+        }
+        
+        // Call service
+        try {
+            RoomService.JoinResponse response = roomService.joinRoomByCode(
+                roomCode.trim(), 
+                username.trim()
+            );
+            return ResponseEntity.ok(ApiResponse.success(response, "Joined room successfully"));
+            
+        } catch (RuntimeException e) {
+            String error = e.getMessage();
+            
+            if (error.equals("ROOM_NOT_FOUND")) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error("Room not found with code: " + roomCode));
+            } else if (error.equals("ROOM_ALREADY_STARTED")) {
+                return ResponseEntity.status(400)
+                        .body(ApiResponse.error("Battle already in progress. Cannot join."));
+            } else if (error.equals("ROOM_FULL")) {
+                return ResponseEntity.status(400)
+                        .body(ApiResponse.error("Room is full (10/10 players)"));
+            } else {
+                return ResponseEntity.internalServerError()
+                        .body(ApiResponse.error("Failed to join room: " + error));
+            }
+        }
+    }
+
 }
