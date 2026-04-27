@@ -22,6 +22,7 @@ public class RoomService {
     private final BattleRepository battleRepository;
     private final BattlePlayerRepository battlePlayerRepository;
     private final AvatarService avatarService;
+    private static final int MAX_PLAYERS = 10;
 
     private final Random random = new Random();
 
@@ -35,7 +36,7 @@ public class RoomService {
         for (Battle room : waitingRooms) {
             if (room.getRoomTypeId().equals(roomTypeId)) {
                 long playerCount = battlePlayerRepository.countByBattleId(room.getBattleId());
-                if (playerCount < 10) {
+                if (playerCount < MAX_PLAYERS) {
                     targetRoom = room;
                     break;
                 }
@@ -176,7 +177,7 @@ public class RoomService {
         
         // 3. Check room capacity
         long playerCount = battlePlayerRepository.countByBattleId(battle.getBattleId());
-        if (playerCount >= 10) {
+        if (playerCount >= MAX_PLAYERS) {
             throw new RuntimeException("ROOM_FULL");
         }
         

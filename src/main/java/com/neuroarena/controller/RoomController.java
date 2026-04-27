@@ -14,6 +14,7 @@ import java.util.Map;
 public class RoomController {
 
     private final RoomService roomService;
+    private static final int MAX_PLAYERS = 10;
 
     @PostMapping("/join")
     public ResponseEntity<ApiResponse<RoomService.JoinResponse>> joinOrCreateRoom(
@@ -38,7 +39,7 @@ public class RoomController {
 
     @PostMapping("/join-by-code")
     public ResponseEntity<ApiResponse<RoomService.JoinResponse>> joinRoomByCode(
-        
+
         @RequestBody Map<String, String> request) {
         
         String roomCode = request.get("roomCode");
@@ -80,7 +81,7 @@ public class RoomController {
                         .body(ApiResponse.error("Battle already in progress. Cannot join."));
             } else if (error.equals("ROOM_FULL")) {
                 return ResponseEntity.status(400)
-                        .body(ApiResponse.error("Room is full (10/10 players)"));
+                        .body(ApiResponse.error("Room is full"));
             } else {
                 return ResponseEntity.internalServerError()
                         .body(ApiResponse.error("Failed to join room: " + error));

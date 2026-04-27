@@ -28,6 +28,7 @@ public class WebSocketController {
     private final BattlePlayerRepository battlePlayerRepository;
 
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
+    private static final int MAX_PLAYERS = 10;
 
     @MessageMapping("/quiz/join")
     public void joinRoom(@Payload Map<String, String> message) {
@@ -73,7 +74,7 @@ public class WebSocketController {
         playerListMessage.put("type", "PLAYER_LIST");
         playerListMessage.put("players", playerList);
         playerListMessage.put("count", playerList.size());
-        playerListMessage.put("maxPlayers", 10);
+        playerListMessage.put("maxPlayers", MAX_PLAYERS);
         
         
         messagingTemplate.convertAndSend(
@@ -173,7 +174,7 @@ public class WebSocketController {
         playerListMessage.put("type", "PLAYER_LIST");
         playerListMessage.put("players", playerList);
         playerListMessage.put("count", playerList.size());
-        playerListMessage.put("maxPlayers", 10);
+        playerListMessage.put("maxPlayers", MAX_PLAYERS);
         
         messagingTemplate.convertAndSend(
             "/topic/room/" + roomCode,
@@ -197,7 +198,7 @@ public class WebSocketController {
         long readyCount = battlePlayerRepository.countReadyPlayers(battle.getBattleId());
         long totalPlayers = battlePlayerRepository.countByBattleId(battle.getBattleId());
         
-        if (readyCount == totalPlayers && totalPlayers == 10) {
+        if (readyCount == totalPlayers && totalPlayers == MAX_PLAYERS) {
             // All players ready and room full - start battle
             startBattle(battle, roomCode);
         }
@@ -258,7 +259,7 @@ public class WebSocketController {
         playerListMessage.put("type", "PLAYER_LIST");
         playerListMessage.put("players", playerList);
         playerListMessage.put("count", playerList.size());
-        playerListMessage.put("maxPlayers", 10);
+        playerListMessage.put("maxPlayers", MAX_PLAYERS);
         
         messagingTemplate.convertAndSend(
             "/topic/room/" + roomCode,
