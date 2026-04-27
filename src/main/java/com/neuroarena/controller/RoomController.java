@@ -5,6 +5,7 @@ import com.neuroarena.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Map;
 
@@ -14,7 +15,9 @@ import java.util.Map;
 public class RoomController {
 
     private final RoomService roomService;
-    private static final int MAX_PLAYERS = 10;
+
+    @Value("${game.max-players}")
+    private int MAX_PLAYERS;
 
     @PostMapping("/join")
     public ResponseEntity<ApiResponse<RoomService.JoinResponse>> joinOrCreateRoom(

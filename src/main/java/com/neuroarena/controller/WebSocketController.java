@@ -10,6 +10,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -28,7 +29,9 @@ public class WebSocketController {
     private final BattlePlayerRepository battlePlayerRepository;
 
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
-    private static final int MAX_PLAYERS = 10;
+
+    @Value("${game.max-players}")
+    private int MAX_PLAYERS;
 
     @MessageMapping("/quiz/join")
     public void joinRoom(@Payload Map<String, String> message) {
