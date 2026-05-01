@@ -1,5 +1,6 @@
 package com.neuroarena.repository;
 
+import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -36,4 +37,12 @@ public interface BattleRepository extends JpaRepository<Battle, String> {  // St
     @Modifying
     @Query("UPDATE Battle b SET b.status = 'ENDED', b.endedAt = :endedAt WHERE b.battleId = :battleId")
     void endBattle(@Param("battleId") String battleId, @Param("endedAt") LocalDateTime endedAt);
+
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Battle b SET b.status = 'IN_PROGRESS' WHERE b.battleId = :battleId")
+    void updateStatusToInProgress(String battleId);
+
+
 }

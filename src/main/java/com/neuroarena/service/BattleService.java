@@ -3,6 +3,7 @@ package com.neuroarena.service;
 import com.neuroarena.model.Battle;
 import com.neuroarena.model.BattleQuestion;
 import com.neuroarena.model.Question;
+import com.neuroarena.repository.BattlePlayerRepository;
 import com.neuroarena.repository.BattleQuestionRepository;
 import com.neuroarena.repository.BattleRepository;
 import com.neuroarena.repository.QuestionRepository;
@@ -22,19 +23,24 @@ public class BattleService {
     private final BattleRepository battleRepository;
     private final BattleQuestionRepository battleQuestionRepository;
     private final QuestionRepository questionRepository;
+    private final BattlePlayerRepository battlePlayerRepository;
 
     public BattleService(BattleRepository battleRepository,
                          BattleQuestionRepository battleQuestionRepository,
-                         QuestionRepository questionRepository) {
+                         QuestionRepository questionRepository, BattlePlayerRepository battlePlayerRepository) {
         this.battleRepository = battleRepository;
         this.battleQuestionRepository = battleQuestionRepository;
         this.questionRepository = questionRepository;
+        this.battlePlayerRepository = battlePlayerRepository;
     }
 
     @Transactional
     public void startBattle(String battleId, Integer roomTypeId) {
 
         log.info("Starting battle: {}", battleId);
+
+        // Update all player statuses to IN_GAME
+        battlePlayerRepository.updateAllPlayerStatus(battleId,"IN_GAME");
 
         // 1. Update battle status to IN_PROGRESS
         battleRepository.updateStatusToInProgress(battleId);

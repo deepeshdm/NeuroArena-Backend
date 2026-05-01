@@ -4,6 +4,7 @@ import com.neuroarena.model.Battle;
 import com.neuroarena.model.BattlePlayer;
 import com.neuroarena.repository.BattlePlayerRepository;
 import com.neuroarena.repository.BattleRepository;
+import com.neuroarena.service.BattleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -27,6 +28,7 @@ public class WebSocketController {
     private final SimpMessagingTemplate messagingTemplate;
     private final BattleRepository battleRepository;
     private final BattlePlayerRepository battlePlayerRepository;
+    private final BattleService battleService;
 
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
@@ -206,22 +208,21 @@ public class WebSocketController {
             startBattle(battle, roomCode);
         }
     }
-    
+
     private void startBattle(Battle battle, String roomCode) {
-        // Update all player statuses to IN_GAME
-        battlePlayerRepository.updatePlayerStatus(battle.getBattleId(), null, "IN_GAME");
-        
+
+        // Call BattleService to handle the battle start logic
+        battleService.startBattle(battle.getBattleId(), battle.getRoomTypeId());
+
+        // Broadcast to all players
         Map<String, Object> startMessage = new HashMap<>();
         startMessage.put("type", "BATTLE_START");
-        startMessage.put("message", "All players ready! Battle starting...");
         startMessage.put("battleId", battle.getBattleId());
-        
-        messagingTemplate.convertAndSend(
-            "/topic/room/" + roomCode,
-            startMessage
-        );
-        
-        log.info("Battle starting in room: {}", roomCode);
+        startMessage.put("message", "Battle starting!");
+
+        messagingTemplate.convertAndSend("/topic/room/" + roomCode, startMessage);
+
+        log.info("Battle started in room: {}", roomCode);
     }
 
 
