@@ -334,7 +334,36 @@ public class WebSocketController {
         log.info("Sent question {} to player {}", question.get("questionNumber"), playerId);
     }
 
+    @MessageMapping("/quiz/submit-answer")
+    public void submitAnswer(@Payload Map<String, String> message) {
 
+        String battleId        = message.get("battleId");
+        String playerId        = message.get("playerId");
+        String questionId      = message.get("questionId");
+        String selectedAnswerId = message.get("selectedAnswerId"); // null = timed out
+        int responseTimeMs     = Integer.parseInt(message.getOrDefault("responseTimeMs", "30000"));
+
+        log.info("Player {} submitting answer for battle {}, question {}", playerId, battleId, questionId);
+
+        // 1. Process & score the answer
+        Map<String, Object> result = battleService.submitAnswer(
+                battleId, playerId, questionId, selectedAnswerId, responseTimeMs
+        );
+
+        // 2. Send result back to THIS player only
+        result.put("type", "ANSWER_RESULT");
+        messagingTemplate.convertAndSend("/topic/player/" + playerId, result);
+
+        // 3. Broadcast updated leaderboard to ALL players in the room
+        Battle battle = battleRepository.findById(battleId).orElse(null);
+        if (battle != null) {
+            List<Map<String, Object>> leaderboard = battleService.getLeaderboard(battleId);
+            Map<String, Object> lbMsg = new HashMap<>();
+            lbMsg.put("type", "LEADERBOARD_UPDATE");
+            lbMsg.put("leaderboard", leaderboard);
+            messagingTemplate.convertAndSend("/topic/room/" + battle.getRoomCode(), lbMsg);
+        }
+    }
 
 
 

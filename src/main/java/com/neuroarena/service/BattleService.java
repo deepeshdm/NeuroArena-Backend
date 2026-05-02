@@ -1,10 +1,7 @@
 package com.neuroarena.service;
 
-import com.neuroarena.model.Battle;
-import com.neuroarena.model.BattleQuestion;
-import com.neuroarena.model.Question;
+import com.neuroarena.model.*;
 import com.neuroarena.repository.*;
-import com.neuroarena.model.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -121,12 +118,14 @@ public class BattleService {
 
         // 7. Build response map (no DTO)
         Map<String, Object> response = new HashMap<>();
+        response.put("questionId", question.getQuestionId());
         response.put("questionNumber", nextBattleQuestion.getQuestionNumber());
         response.put("totalQuestions", battleQuestions.size());
         response.put("questionText", question.getQuestionText());
         response.put("timeLimitSeconds", 30);
         response.put("category", question.getCategory());
         response.put("difficulty", question.getDifficulty());
+
 
         // Add options
         List<Map<String, Object>> optionsList = new ArrayList<>();
@@ -151,5 +150,94 @@ public class BattleService {
         return answeredQuestions.size() >= battleQuestions.size();
     }
 
+
+    @Transactional
+    public Map<String, Object> submitAnswer(String battleId, String playerId,
+                                            String questionId, String selectedAnswerId,
+                                            Integer responseTimeMs) {
+
+        // 1. Prevent double-submission for same question
+        boolean alreadyAnswered = playerAnswerRepository
+                .existsByBattleIdAndPlayerIdAndQuestionId(battleId, playerId, questionId);
+        if (alreadyAnswered) {
+            Map<String, Object> err = new HashMap<>();
+            err.put("error", "Already answered this question");
+            return err;
+        }
+
+        // 2. Get the BattleQuestion for pointsPossible + questionNumber
+        BattleQuestion bq = battleQuestionRepository
+                .findByBattleIdAndQuestionId(battleId, questionId)
+                .orElseThrow(() -> new RuntimeException("Question not in this battle"));
+
+        // 3. Check correctness
+        Answer selected = answerRepository.findById(selectedAnswerId).orElse(null);
+        boolean isCorrect = selected != null && Boolean.TRUE.equals(selected.getIsCorrect());
+
+        // 4. Calculate points with time bonus
+        int pointsEarned = 0;
+        if (isCorrect) {
+            int base = bq.getPointsPossible() != null ? bq.getPointsPossible() : 100;
+            // Time bonus: full points under 5s, scales down to 0 bonus at 30s
+            double timeBonus = Math.max(0, 1.0 - (responseTimeMs / 30000.0));
+            pointsEarned = (int) Math.round(base * (1 + timeBonus));
+        }
+
+        // 5. Save PlayerAnswer
+        PlayerAnswer pa = new PlayerAnswer();
+        pa.setPlayerAnswerId(UUID.randomUUID().toString());
+        pa.setBattleId(battleId);
+        pa.setPlayerId(playerId);
+        pa.setQuestionId(questionId);
+        pa.setSelectedAnswerId(selectedAnswerId != null ? selectedAnswerId : "");
+        pa.setQuestionNumber(bq.getQuestionNumber());
+        pa.setResponseTimeMs(responseTimeMs);
+        pa.setPointsEarned(pointsEarned);
+        pa.setIsCorrect(isCorrect);
+        pa.setSubmittedAt(java.time.LocalDateTime.now());
+        playerAnswerRepository.save(pa);
+
+        // 6. Build result response
+        Map<String, Object> result = new HashMap<>();
+        result.put("isCorrect", isCorrect);
+        result.put("pointsEarned", pointsEarned);
+        result.put("correctAnswerId", getCorrectAnswerId(questionId));
+        result.put("questionNumber", bq.getQuestionNumber());
+        return result;
+    }
+
+    private String getCorrectAnswerId(String questionId) {
+        return answerRepository.findByQuestion_QuestionId(questionId)
+                .stream()
+                .filter(a -> Boolean.TRUE.equals(a.getIsCorrect()))
+                .map(Answer::getAnswerId)
+                .findFirst()
+                .orElse(null);
+    }
+
+    public List<Map<String, Object>> getLeaderboard(String battleId) {
+        List<BattlePlayer> players = battlePlayerRepository.findByBattleId(battleId);
+
+        List<Map<String, Object>> board = new ArrayList<>();
+        for (BattlePlayer bp : players) {
+            int score = playerAnswerRepository.sumPointsByBattleIdAndPlayerId(battleId, bp.getPlayerId());
+            Map<String, Object> entry = new HashMap<>();
+            entry.put("playerId", bp.getPlayerId());
+            entry.put("username", bp.getUsername());
+            entry.put("avatar", bp.getAvatarIconUrl());
+            entry.put("score", score);
+            board.add(entry);
+        }
+
+        // Sort descending by score, assign rank
+        board.sort((a, b) -> (int) b.get("score") - (int) a.get("score") > 0 ? -1 : 1);
+        // Fix: proper comparator
+        board.sort(Comparator.comparingInt(e -> -((int) ((Map<String,Object>)e).get("score"))));
+
+        for (int i = 0; i < board.size(); i++) {
+            board.get(i).put("rank", i + 1);
+        }
+        return board;
+    }
 
 }

@@ -18,4 +18,6 @@ public interface BattleQuestionRepository extends JpaRepository<BattleQuestion, 
 
     // Delete all questions for a battle (cleanup)
     void deleteByBattleId(String battleId);
+
+    Optional<BattleQuestion> findByBattleIdAndQuestionId(String battleId, String questionId);
 }
