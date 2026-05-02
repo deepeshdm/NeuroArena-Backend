@@ -216,11 +216,14 @@ public class BattleService {
     }
 
     public List<Map<String, Object>> getLeaderboard(String battleId) {
+        // Start from ALL players in the battle, not just those who answered
         List<BattlePlayer> players = battlePlayerRepository.findByBattleId(battleId);
 
         List<Map<String, Object>> board = new ArrayList<>();
         for (BattlePlayer bp : players) {
+            // Returns 0 if no answers yet (COALESCE handles null)
             int score = playerAnswerRepository.sumPointsByBattleIdAndPlayerId(battleId, bp.getPlayerId());
+
             Map<String, Object> entry = new HashMap<>();
             entry.put("playerId", bp.getPlayerId());
             entry.put("username", bp.getUsername());
@@ -229,14 +232,12 @@ public class BattleService {
             board.add(entry);
         }
 
-        // Sort descending by score, assign rank
-        board.sort((a, b) -> (int) b.get("score") - (int) a.get("score") > 0 ? -1 : 1);
-        // Fix: proper comparator
-        board.sort(Comparator.comparingInt(e -> -((int) ((Map<String,Object>)e).get("score"))));
-
+        // Sort descending, assign rank
+        board.sort(Comparator.comparingInt(e -> -((int) ((Map<String, Object>) e).get("score"))));
         for (int i = 0; i < board.size(); i++) {
             board.get(i).put("rank", i + 1);
         }
+
         return board;
     }
 

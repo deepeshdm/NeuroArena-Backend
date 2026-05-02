@@ -219,8 +219,15 @@ public class WebSocketController {
         startMessage.put("type", "BATTLE_START");
         startMessage.put("battleId", battle.getBattleId());
         startMessage.put("message", "Battle starting!");
-
         messagingTemplate.convertAndSend("/topic/room/" + roomCode, startMessage);
+
+
+        // broadcast initial leaderboard with all players at 0
+        List<Map<String, Object>> leaderboard = battleService.getLeaderboard(battle.getBattleId());
+        Map<String, Object> lbMsg = new HashMap<>();
+        lbMsg.put("type", "LEADERBOARD_UPDATE");
+        lbMsg.put("leaderboard", leaderboard);
+        messagingTemplate.convertAndSend("/topic/room/" + roomCode, lbMsg);
 
         log.info("Battle started in room: {}", roomCode);
     }
