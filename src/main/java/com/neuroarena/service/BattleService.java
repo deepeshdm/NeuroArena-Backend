@@ -123,6 +123,7 @@ public class BattleService {
         response.put("totalQuestions", battleQuestions.size());
         response.put("questionText", question.getQuestionText());
         response.put("timeLimitSeconds", 30);
+        response.put("pointsPossible", nextBattleQuestion.getPointsPossible());
         response.put("category", question.getCategory());
         response.put("difficulty", question.getDifficulty());
 
@@ -178,9 +179,16 @@ public class BattleService {
         int pointsEarned = 0;
         if (isCorrect) {
             int base = bq.getPointsPossible() != null ? bq.getPointsPossible() : 100;
-            // Time bonus: full points under 5s, scales down to 0 bonus at 30s
-            double timeBonus = Math.max(0, 1.0 - (responseTimeMs / 30000.0));
-            pointsEarned = (int) Math.round(base * (1 + timeBonus));
+            double multiplier;
+            if (responseTimeMs <= 5000) {
+                multiplier = 2.5;
+            } else if (responseTimeMs >= 30000) {
+                multiplier = 1.0;
+            } else {
+                // Linear scale from 2.5x at 5s down to 1.0x at 30s
+                multiplier = 2.5 - (1.5 * (responseTimeMs - 5000.0) / 25000.0);
+            }
+            pointsEarned = (int) Math.round(base * multiplier);
         }
 
         // 5. Save PlayerAnswer
