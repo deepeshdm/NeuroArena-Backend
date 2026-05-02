@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface PlayerAnswerRepository extends JpaRepository<PlayerAnswer, String> {  // String ID
@@ -32,6 +33,11 @@ public interface PlayerAnswerRepository extends JpaRepository<PlayerAnswer, Stri
     // Calculate average response time for a player in a battle
     @Query("SELECT COALESCE(AVG(pa.responseTimeMs), 0) FROM PlayerAnswer pa WHERE pa.battleId = :battleId AND pa.playerId = :playerId")
     Double calculateAverageResponseTime(@Param("battleId") String battleId, @Param("playerId") String playerId);
+
+    // Get all question numbers that a player has already answered in this battle
+    @Query("SELECT pa.questionNumber FROM PlayerAnswer pa WHERE pa.battleId = :battleId AND pa.playerId = :playerId")
+    Set<Integer> findAnsweredQuestionNumbers(@Param("battleId") String battleId,
+                                             @Param("playerId") String playerId);
 
     // Delete answers for a battle (cleanup)
     void deleteByBattleId(String battleId);

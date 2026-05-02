@@ -285,4 +285,57 @@ public class WebSocketController {
     }
 
 
+    private void sendErrorToPlayer(String playerId, String errorMessage) {
+        Map<String, Object> errorMsg = new HashMap<>();
+        errorMsg.put("type", "ERROR");
+        errorMsg.put("message", errorMessage);
+        messagingTemplate.convertAndSend("/topic/player/"+playerId, errorMsg);
+    }
+
+    @MessageMapping("/quiz/get-question")
+    public void getCurrentQuestion(@Payload Map<String, String> message) {
+
+        String battleId = message.get("battleId");
+        String playerId = message.get("playerId");
+
+        log.info("Player {} requesting next question for battle {}", playerId, battleId);
+
+        // 1. Validate battle exists
+        Battle battle = battleRepository.findById(battleId).orElse(null);
+        if (battle == null) {
+            sendErrorToPlayer(playerId, "Battle not found");
+            return;
+        }
+
+        // 2. Validate battle is IN_PROGRESS
+        if (!"IN_PROGRESS".equals(battle.getStatus())) {
+            sendErrorToPlayer(playerId, "Battle is not active");
+            return;
+        }
+
+        // 3. Get next unanswered question
+        Map<String, Object> question = battleService.getNextUnansweredQuestion(battleId, playerId);
+
+        // 4. If no question, player has completed
+        if (question == null) {
+            Map<String, Object> completedMsg = new HashMap<>();
+            completedMsg.put("type", "COMPLETED");
+            completedMsg.put("message", "You've completed all questions!");
+            messagingTemplate.convertAndSend( "/topic/player/"+playerId, completedMsg);
+            return;
+        }
+
+        // 5. Send question to player (no DTO, just raw map)
+        Map<String, Object> questionMsg = new HashMap<>();
+        questionMsg.put("type", "QUESTION");
+        questionMsg.put("data", question);
+        messagingTemplate.convertAndSend( "/topic/player/"+playerId, questionMsg);
+
+        log.info("Sent question {} to player {}", question.get("questionNumber"), playerId);
+    }
+
+
+
+
+
 }
