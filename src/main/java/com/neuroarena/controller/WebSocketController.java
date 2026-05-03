@@ -218,6 +218,7 @@ public class WebSocketController {
         Map<String, Object> startMessage = new HashMap<>();
         startMessage.put("type", "BATTLE_START");
         startMessage.put("battleId", battle.getBattleId());
+        startMessage.put("roomTypeId", battle.getRoomTypeId());
         startMessage.put("message", "Battle starting!");
         messagingTemplate.convertAndSend("/topic/room/" + roomCode, startMessage);
 
