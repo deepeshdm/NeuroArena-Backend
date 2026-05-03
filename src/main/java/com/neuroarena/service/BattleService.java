@@ -5,6 +5,7 @@ import com.neuroarena.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import com.neuroarena.service.GroqService;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
@@ -13,7 +14,7 @@ import java.util.*;
 public class BattleService {
 
     private static final Logger log = LoggerFactory.getLogger(BattleService.class);
-
+    private final GroqService groqService;
     private final BattleRepository battleRepository;
     private final BattleQuestionRepository battleQuestionRepository;
     private final QuestionRepository questionRepository;
@@ -23,7 +24,7 @@ public class BattleService {
 
     public BattleService(BattleRepository battleRepository,
                          BattleQuestionRepository battleQuestionRepository,
-                         QuestionRepository questionRepository,
+                         QuestionRepository questionRepository,GroqService groqService,
                          BattlePlayerRepository battlePlayerRepository,
                          AnswerRepository answerRepository,
                          PlayerAnswerRepository playerAnswerRepository
@@ -33,6 +34,7 @@ public class BattleService {
         this.questionRepository = questionRepository;
         this.battlePlayerRepository = battlePlayerRepository;
         this.answerRepository = answerRepository;
+        this.groqService = groqService;
         this.playerAnswerRepository = playerAnswerRepository;
     }
 
@@ -252,70 +254,84 @@ public class BattleService {
 
     public Map<String, Object> getResultData(String battleId, String playerId) {
 
-        // 1. Get all player answers for this player
         List<PlayerAnswer> answers = playerAnswerRepository
                 .findByBattleIdAndPlayerId(battleId, playerId);
 
-        // 2. Calculate stats
-        int totalScore     = answers.stream().mapToInt(a -> a.getPointsEarned() != null ? a.getPointsEarned() : 0).sum();
-        long correctCount  = answers.stream().filter(a -> Boolean.TRUE.equals(a.getIsCorrect())).count();
-        int totalAnswered  = answers.size();
-        double accuracy    = totalAnswered > 0 ? (correctCount * 100.0 / totalAnswered) : 0;
-        double avgSpeedMs  = answers.stream()
+        int    totalScore     = answers.stream()
+                .mapToInt(a -> a.getPointsEarned() != null ? a.getPointsEarned() : 0).sum();
+        long   correctCount   = answers.stream()
+                .filter(a -> Boolean.TRUE.equals(a.getIsCorrect())).count();
+        int    totalAnswered  = answers.size();
+        double accuracy       = totalAnswered > 0 ? (correctCount * 100.0 / totalAnswered) : 0;
+        double avgSpeedMs     = answers.stream()
                 .mapToInt(a -> a.getResponseTimeMs() != null ? a.getResponseTimeMs() : 30000)
                 .average().orElse(0);
 
-        // 3. Get full leaderboard to determine rank
-        List<Map<String, Object>> leaderboard = getLeaderboard(battleId);
+        List<Map<String, Object>> leaderboard  = getLeaderboard(battleId);
         int finalRank    = leaderboard.stream()
                 .filter(e -> playerId.equals(e.get("playerId")))
-                .map(e -> (int) e.get("rank"))
-                .findFirst().orElse(0);
+                .map(e -> (int) e.get("rank")).findFirst().orElse(0);
         int totalPlayers = leaderboard.size();
         boolean userWon  = finalRank == 1;
 
-        // 4. Calculate cognitive attributes (0–100 scale)
-        // LOGIC     = accuracy
-        // SPEED     = inverse of avg response time (30s = 0, 0s = 100)
-        // FOCUS     = % of questions answered before timer expired
-        // EXECUTION = correct answers in under 10s / total correct
-        // MEMORY    = score relative to max possible
-        int totalQuestions = battleQuestionRepository.findByBattleIdOrderByQuestionNumber(battleId).size();
-        int maxPossible    = battleQuestionRepository.findByBattleIdOrderByQuestionNumber(battleId)
-                .stream().mapToInt(bq -> bq.getPointsPossible() != null ? bq.getPointsPossible() : 100).sum();
+        List<BattleQuestion> battleQuestions = battleQuestionRepository
+                .findByBattleIdOrderByQuestionNumber(battleId);
+        int totalQuestions = battleQuestions.size();
+        int maxPossible    = battleQuestions.stream()
+                .mapToInt(bq -> bq.getPointsPossible() != null ? bq.getPointsPossible() : 100).sum();
 
         int logicVal     = (int) Math.round(accuracy);
         int speedVal     = (int) Math.round(Math.max(0, 100 - (avgSpeedMs / 300)));
-        int focusVal     = totalQuestions > 0 ? (int) Math.round((totalAnswered * 100.0) / totalQuestions) : 0;
-        int executionVal = (int) Math.round(answers.stream()
-                .filter(a -> Boolean.TRUE.equals(a.getIsCorrect()) && a.getResponseTimeMs() != null && a.getResponseTimeMs() <= 10000)
-                .count() * 100.0 / Math.max(1, correctCount));
-        int memoryVal    = maxPossible > 0 ? (int) Math.round((totalScore * 100.0) / maxPossible) : 0;
+        int focusVal     = totalQuestions > 0
+                ? (int) Math.round((totalAnswered * 100.0) / totalQuestions) : 0;
+        int executionVal = (int) Math.round(
+                answers.stream()
+                        .filter(a -> Boolean.TRUE.equals(a.getIsCorrect())
+                                && a.getResponseTimeMs() != null && a.getResponseTimeMs() <= 10000)
+                        .count() * 100.0 / Math.max(1, correctCount));
+        int memoryVal    = maxPossible > 0
+                ? (int) Math.round((totalScore * 100.0) / maxPossible) : 0;
 
-        // 5. Derive persona
-        Map<String, Object> persona = derivePersona(logicVal, speedVal, focusVal, userWon);
-
-        // 6. Build result
-        Map<String, Object> result = new HashMap<>();
-        result.put("battleId",     battleId);
-        result.put("playerId",     playerId);
-        result.put("finalRank",    finalRank);
-        result.put("totalPlayers", totalPlayers);
-        result.put("score",        totalScore);
-        result.put("accuracy",     Math.round(accuracy * 10.0) / 10.0);
-        result.put("avgSpeedSecs", Math.round(avgSpeedMs / 100.0) / 10.0);
-        result.put("correctAnswers", (int) correctCount);
-        result.put("totalQuestions", totalQuestions);
-        result.put("userWon",      userWon);
-        result.put("leaderboard",  leaderboard);
-        result.put("cognitiveAttributes", List.of(
+        List<Map<String, Object>> cognitiveAttributes = List.of(
                 Map.of("name", "LOGIC",     "value", logicVal),
                 Map.of("name", "SPEED",     "value", speedVal),
                 Map.of("name", "FOCUS",     "value", focusVal),
                 Map.of("name", "EXECUTION", "value", executionVal),
                 Map.of("name", "MEMORY",    "value", memoryVal)
-        ));
-        result.put("persona", persona);
+        );
+
+        Map<String, Object> persona = derivePersona(logicVal, speedVal, focusVal, userWon);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("battleId",            battleId);
+        result.put("playerId",            playerId);
+        result.put("finalRank",           finalRank);
+        result.put("totalPlayers",        totalPlayers);
+        result.put("score",               totalScore);
+        result.put("accuracy",            Math.round(accuracy * 10.0) / 10.0);
+        result.put("avgSpeedSecs",        Math.round(avgSpeedMs / 100.0) / 10.0);
+        result.put("correctAnswers",      (int) correctCount);
+        result.put("totalQuestions",      totalQuestions);
+        result.put("userWon",             userWon);
+        result.put("leaderboard",         leaderboard);
+        result.put("cognitiveAttributes", cognitiveAttributes);
+        result.put("persona",             persona);
+
+        // Try Groq — fall back to persona description silently
+        String aiAnalysis = null;
+        try {
+            aiAnalysis = groqService.analyzePersonality(result);
+        } catch (Exception e) {
+            log.warn("Groq call threw: {} — using fallback", e.getMessage());
+        }
+
+        if (aiAnalysis != null) {
+            result.put("aiAnalysis",         aiAnalysis);
+            result.put("aiAnalysisFallback", false);
+        } else {
+            result.put("aiAnalysis",         persona.get("description").toString());
+            result.put("aiAnalysisFallback", true);
+        }
 
         return result;
     }
@@ -324,50 +340,36 @@ public class BattleService {
         String name, description, topSkill, skillLevel, growthArea, growthValue;
 
         if (!won) {
-            name        = "The Fragmented";
-            description = "Your neural cohesion is faltering. Mental structures are collapsing under pressure, leading to critical inefficiencies in logic execution.";
-            topSkill    = logic >= speed ? "Structural Logic" : "Neural Speed";
-            skillLevel  = "Developing";
-            growthArea  = "Cognitive Cohesion";
-            growthValue = "Aura-3";
+            name = "The Fragmented";
+            description = "Your neural cohesion is faltering. Mental structures are collapsing under pressure.";
+            topSkill = logic >= speed ? "Structural Logic" : "Neural Speed";
+            skillLevel = "Developing"; growthArea = "Cognitive Cohesion"; growthValue = "Aura-3";
         } else if (logic >= 90 && speed >= 80) {
-            name        = "The Architect";
-            description = "You build mental structures with terrifying precision. Your logic is your strongest weapon, allowing you to bypass noise effortlessly.";
-            topSkill    = "Structural Logic";
-            skillLevel  = "Elite";
-            growthArea  = "Speed-Focus Synergy";
-            growthValue = "Aura-7";
+            name = "The Architect";
+            description = "You build mental structures with terrifying precision. Logic is your weapon.";
+            topSkill = "Structural Logic"; skillLevel = "Elite";
+            growthArea = "Speed-Focus Synergy"; growthValue = "Aura-7";
         } else if (speed >= 85) {
-            name        = "The Phantom";
-            description = "You move faster than thought itself. Decisions are made before others even read the question. Pure reflex, pure dominance.";
-            topSkill    = "Neural Speed";
-            skillLevel  = "Elite";
-            growthArea  = "Deep Logic";
-            growthValue = "Aura-6";
+            name = "The Phantom";
+            description = "You move faster than thought. Decisions made before others read the question.";
+            topSkill = "Neural Speed"; skillLevel = "Elite";
+            growthArea = "Deep Logic"; growthValue = "Aura-6";
         } else if (focus >= 90) {
-            name        = "The Sentinel";
-            description = "Unwavering. Every question met with locked focus and calculated precision. You leave nothing on the table.";
-            topSkill    = "Focus Lock";
-            skillLevel  = "Advanced";
-            growthArea  = "Speed Burst";
-            growthValue = "Aura-5";
+            name = "The Sentinel";
+            description = "Unwavering. Every question met with locked focus and calculated precision.";
+            topSkill = "Focus Lock"; skillLevel = "Advanced";
+            growthArea = "Speed Burst"; growthValue = "Aura-5";
         } else {
-            name        = "The Strategist";
-            description = "Measured, methodical, and effective. You balance speed and accuracy to consistently outperform the field.";
-            topSkill    = "Balanced Execution";
-            skillLevel  = "Advanced";
-            growthArea  = "Peak Speed";
-            growthValue = "Aura-5";
+            name = "The Strategist";
+            description = "Measured, methodical, effective. You balance speed and accuracy to outperform.";
+            topSkill = "Balanced Execution"; skillLevel = "Advanced";
+            growthArea = "Peak Speed"; growthValue = "Aura-5";
         }
 
         Map<String, Object> p = new HashMap<>();
-        p.put("name", name);
-        p.put("description", description);
-        p.put("topSkill", topSkill);
-        p.put("skillLevel", skillLevel);
-        p.put("growthArea", growthArea);
-        p.put("growthValue", growthValue);
+        p.put("name", name); p.put("description", description);
+        p.put("topSkill", topSkill); p.put("skillLevel", skillLevel);
+        p.put("growthArea", growthArea); p.put("growthValue", growthValue);
         return p;
     }
-
 }
