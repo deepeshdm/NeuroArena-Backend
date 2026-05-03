@@ -325,10 +325,9 @@ public class WebSocketController {
 
         // 4. If no question, player has completed
         if (question == null) {
-            Map<String, Object> completedMsg = new HashMap<>();
-            completedMsg.put("type", "BATTLE_COMPLETED");
-            completedMsg.put("message", "You've completed all questions!");
-            messagingTemplate.convertAndSend( "/topic/player/"+playerId, completedMsg);
+            Map<String, Object> resultData = battleService.getResultData(battleId, playerId);
+            resultData.put("type", "BATTLE_COMPLETED");
+            messagingTemplate.convertAndSend("/topic/player/" + playerId, resultData);
             return;
         }
 

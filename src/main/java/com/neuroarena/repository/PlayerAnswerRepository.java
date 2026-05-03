@@ -46,4 +46,6 @@ public interface PlayerAnswerRepository extends JpaRepository<PlayerAnswer, Stri
 
     @Query("SELECT COALESCE(SUM(pa.pointsEarned), 0) FROM PlayerAnswer pa WHERE pa.battleId = :battleId AND pa.playerId = :playerId")
     int sumPointsByBattleIdAndPlayerId(String battleId, String playerId);
+
+    List<PlayerAnswer> findByBattleIdAndPlayerId(String battleId, String playerId);
 }
