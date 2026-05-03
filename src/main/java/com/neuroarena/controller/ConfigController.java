@@ -20,15 +20,11 @@ public class ConfigController {
     @Value("${game.questions-per-battle}")
     private int questionsPerBattle;
 
-    @Value("${game.question-time-limit}")
-    private int questionTimeLimit;
-
     @GetMapping
     public ResponseEntity<Map<String, Object>> getConfig() {
         Map<String, Object> config = new HashMap<>();
         config.put("maxPlayers", maxPlayers);
         config.put("questionsPerBattle", questionsPerBattle);
-        config.put("questionTimeLimit", questionTimeLimit);
 
         return ResponseEntity.ok(config);
     }
