@@ -4,6 +4,7 @@ import com.neuroarena.model.*;
 import com.neuroarena.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.neuroarena.service.GroqService;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +13,9 @@ import java.util.*;
 
 @Service
 public class BattleService {
+
+    @Value("${game.questions-per-battle}")
+    private int questionsPerBattle;
 
     private static final Logger log = LoggerFactory.getLogger(BattleService.class);
     private final GroqService groqService;
@@ -52,9 +56,9 @@ public class BattleService {
         // 2. Get 10 random questions based on room type
         List<Question> questions;
         if (roomTypeId == 1) {
-            questions = questionRepository.findRandomMixedQuestions();
+            questions = questionRepository.findRandomMixedQuestions(this.questionsPerBattle);
         } else {
-            questions = questionRepository.findRandomQuestionsByRoomType(roomTypeId);
+            questions = questionRepository.findRandomQuestionsByRoomType(roomTypeId, this.questionsPerBattle);
         }
 
         // 3. Insert into battle_questions table
