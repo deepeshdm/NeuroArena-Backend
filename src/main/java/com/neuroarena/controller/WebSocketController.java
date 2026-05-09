@@ -324,11 +324,29 @@ public class WebSocketController {
         // 3. Get next unanswered question
         Map<String, Object> question = battleService.getNextUnansweredQuestion(battleId, playerId);
 
-        // 4. If no question, player has completed
+        // 4. If no question, player has completed their questions
         if (question == null) {
-            Map<String, Object> resultData = battleService.getResultData(battleId, playerId);
-            resultData.put("type", "BATTLE_COMPLETED");
-            messagingTemplate.convertAndSend("/topic/player/" + playerId, resultData);
+
+            // Tell THIS player to wait
+            Map<String, Object> waitMsg = new HashMap<>();
+            waitMsg.put("type", "WAITING_FOR_PLAYERS");
+            waitMsg.put("message", "Waiting for other players to finish...");
+            messagingTemplate.convertAndSend("/topic/player/" + playerId, waitMsg);
+
+            // Check if ALL players have now finished
+            if (battleService.haveAllPlayersCompleted(battleId)) {
+
+                // Send result to each player individually
+                List<BattlePlayer> players = battlePlayerRepository.findByBattleId(battleId);
+                for (BattlePlayer bp : players) {
+                    Map<String, Object> resultData = battleService.getResultData(battleId, bp.getPlayerId());
+                    resultData.put("type", "BATTLE_COMPLETED");
+                    messagingTemplate.convertAndSend("/topic/player/" + bp.getPlayerId(), resultData);
+                }
+
+                log.info("All players completed battle {}, results sent", battleId);
+            }
+
             return;
         }
 

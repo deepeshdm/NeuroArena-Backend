@@ -376,4 +376,16 @@ public class BattleService {
         p.put("growthArea", growthArea); p.put("growthValue", growthValue);
         return p;
     }
+
+
+    public boolean haveAllPlayersCompleted(String battleId) {
+        List<BattlePlayer> players = battlePlayerRepository.findByBattleId(battleId);
+        for (BattlePlayer bp : players) {
+            if (!hasPlayerCompleted(battleId, bp.getPlayerId())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }
